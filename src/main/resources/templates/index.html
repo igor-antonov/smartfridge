@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Мой холодильник</title>
+
+    <style type="text/css">
+        table,th,td
+        {
+            margin-top: 5px;
+            border:1px solid black;
+            background-color: azure;
+            color: darkgreen;
+        }
+        td
+        {
+            padding:5px;
+            text-align: center;
+        }
+        input
+        {
+            margin-bottom: 5px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.15.2/axios.js"></script>
+</head>
+
+<body>
+<div id="app">
+</div>
+<script>
+    const instance = axios.create({
+        baseURL: '/product',
+        timeout: 1000
+    });
+    function getIndex(list, id) {
+        for (let i = 0; i < list.length; i++ ) {
+            if (list[i].id === id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    Vue.component('product-table', {
+        props: ['products'],
+        data: function () {
+            return {product : null};
+        },
+        template:
+            `<div>
+            <product-form :products = "products" :productAttr = "product"/>
+            <div/>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Срок годности</th>
+                        <th>Дата добавления</th>
+                        <th>Окончание срока годности</th>
+                        <th>Действие1</th>
+                        <th>Действие2</th>
+                    </tr>
+                </thead>
+                <tbody><product-rows v-for="product in products" :product = "product" :products = "products"
+                :key = "product.id" :editMethod = "editMethod"/>
+                </tbody>
+            </table>
+        </div>`,
+        methods: {
+            editMethod: function (product) {
+                this.product = product;
+            }
+        }
+    });
+    Vue.component('product-rows', {
+        props: ['product', 'editMethod', 'products'],
+        template:
+            `<tr>
+            <td v-if="product.productDetails">{{product.productDetails.name}}</td>
+            <td v-if="product.productDetails">{{product.productDetails.storagePeriod}}</td>
+            <td v-if="product.productDetails">{{product.productDetails.creationDate}}</td>
+            <td v-if="product.productDetails">{{product.productDetails.bestBeforeDate}}</td>
+            <td><input type="image" src="edit.png" @click = "edit"></td>
+            <td><input type="image" src="del.png" @click ="del"/></td>
+        </tr>`,
+        methods: {
+            del: function() {
+                instance.delete('/' + this.product.id).then(res => {
+                    if (res.status === 200) {
+                        this.products.splice(this.products.indexOf(this.product), 1);
+                    }
+                })
+            },
+            edit: function () {
+                this.editMethod(this.product);
+            }
+        }
+    });
+    Vue.component('product-form', {
+        props: ['productAttr', 'products'],
+        data: function () {
+            return {
+                id: '',
+                name: '',
+                storagePeriod: '',
+                creationDate: '',
+                bestBeforeDate: '',
+            }
+        },
+        watch: {
+            productAttr: function(newVal, oldVal){
+                this.id = newVal.id;
+                this.name = newVal.productDetails.name;
+                this.storagePeriod = newVal.productDetails.storagePeriod;
+                this.creationDate = newVal.productDetails.creationDate;
+                this.bestBeforeDate = newVal.productDetails.bestBeforeDate;
+            }
+        },
+        template:
+            `<div>
+                <br/>
+                <h3 v-if="id">Изменение продукта:</h3>
+                <h3 v-else>Добавление продукта:</h3>
+                <div><input type="text" placeholder="Название" v-model="name"/></div>
+                <div><input type="number" placeholder="Срок годности" v-model="storagePeriod"/></div>
+                <div><input type="text" placeholder="Дата добавления" v-model="creationDate"/></div>
+                <div><input type="text" placeholder="Окончание срока годности" v-model="bestBeforeDate"/></div>
+                <div><input type="button" value="Сохранить" @click="save"/></div>
+            </div>`,
+        methods: {
+            save: function () {
+                const productDetails = {
+                    name: this.name,
+                    storagePeriod: this.storagePeriod,
+                    creationDate: this.creationDate,
+                    bestBeforeDate: this.bestBeforeDate
+                };
+                const product = {
+                    productDetails: productDetails
+                };
+                if (this.name ===''){
+                    alert('Заполните название')
+                }
+                else {
+                    if (this.id) {
+                        instance.put('/' + this.productAttr.id, product).then(data => {
+                            const productData = data.data;
+                            const index = getIndex(this.products, productData.id);
+                            this.products.splice(index, 1, productData);
+                        })
+                    }
+                    else {
+                        instance.post('', product).then(data => {
+                            this.products.push(product)
+                        });
+                    }
+                    this.id = '';
+                    this.name = '';
+                    this.storagePeriod = '';
+                    this.creationDate = '';
+                    this.bestBeforeDate = '';
+                }
+            }
+        }
+    });
+    new Vue({
+        el: '#app',
+        data: {
+            products: [],
+            product: null,
+        },
+        template:
+            `<div>
+            <product-table :products = "products"/>
+        </div>`,
+        created() {
+            instance
+                .get('')
+                .then((response) => {response.data.forEach(products=> this.products.push(products))})
+                .catch(e => {console.log(e)})
+        }
+    });
+</script>
+
+</body>
+
+</html>
