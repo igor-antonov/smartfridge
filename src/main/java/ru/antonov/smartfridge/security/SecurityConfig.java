@@ -2,7 +2,6 @@ package ru.antonov.smartfridge.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,7 +29,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests().antMatchers("/login", "/logout", "/registration").permitAll()
-                .antMatchers("/product/**").hasAuthority("User")
+                .antMatchers("/product/**", "/actuator/**").hasAuthority("User")
                 .anyRequest().authenticated()
                 .and().formLogin()
                 .loginProcessingUrl("/j_spring_security_check")
@@ -42,8 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and().logout().logoutUrl("/logout").logoutSuccessUrl("/logoutSuccessful")
                 .and()
                 .exceptionHandling().accessDeniedHandler(accessDeniedHandler());
-        //возможно, если сделать матчер index, то получится SPA
-        //непонятно почему не отображается favicon.ico
+
     }
 
     @Bean
