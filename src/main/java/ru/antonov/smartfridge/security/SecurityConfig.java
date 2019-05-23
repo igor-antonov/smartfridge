@@ -38,7 +38,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .failureUrl("/login?error=true")
                 .usernameParameter("j_username")
                 .passwordParameter("j_password")
-                .and().logout().logoutUrl("/logout").logoutSuccessUrl("/logoutSuccessful")
+                .and().logout().logoutUrl("/logout").logoutSuccessUrl("/login")
                 .and()
                 .exceptionHandling().accessDeniedHandler(accessDeniedHandler());
 

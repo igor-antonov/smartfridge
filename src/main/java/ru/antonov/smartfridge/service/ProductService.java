@@ -40,7 +40,7 @@ public class ProductService {
     }
 
     public List<Product> findAllByUser(String login) {
-        return repository.findByUser_LoginOrderByBestBeforeDateDesc(login);
+        return repository.findByUser_LoginOrderByBestBeforeDate(login);
     }
 
     List<Product> findExpiresSoon() {
@@ -59,7 +59,6 @@ public class ProductService {
     }
 
     public Product save(Product product, String login) throws DataNotFoundException {
-        //if (product.getProductDetails().)
         Optional<User> userOpt = userRepository.findByLogin(login);
         Optional<ProductDetails> detailsOpt
                 = detailsRepository.findByName(product.getProductDetails().getName());

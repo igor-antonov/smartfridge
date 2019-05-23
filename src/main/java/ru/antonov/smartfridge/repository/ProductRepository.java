@@ -7,6 +7,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface ProductRepository extends CrudRepository<Product, Long> {
-    List<Product> findByUser_LoginOrderByBestBeforeDateDesc(String login);
+    List<Product> findByUser_LoginOrderByBestBeforeDate(String login);
     List<Product> findAllByBestBeforeDateLessThan(LocalDate date);
 }

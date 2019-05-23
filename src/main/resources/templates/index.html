@@ -21,6 +21,10 @@
         {
             margin-bottom: 5px;
         }
+        .expires
+        {
+            background-color: salmon;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.15.2/axios.js"></script>
@@ -34,6 +38,7 @@
         baseURL: '/product',
         timeout: 1000
     });
+    const currentDate = formatDate(new Date());
 
     function getIndex(list, id) {
         for (let i = 0; i < list.length; i++ ) {
@@ -89,15 +94,19 @@
     });
     Vue.component('product-rows', {
         props: ['product', 'editMethod', 'products'],
+        data: function () {
+            return {expiresDate: addDays(new Date(), 1)};
+        },
         template:
             `<tr v-if="product.productDetails">
-            <td>{{product.productDetails.name}}</td>
-            <td>{{product.productDetails.storagePeriod}}</td>
-            <td>{{product.creationDate}}</td>
-            <td>{{product.bestBeforeDate}}</td>
-            <td><input type="image" src="edit.png" @click = "edit"></td>
-            <td><input type="image" src="del.png" @click ="del"/></td>
-        </tr>`,
+                <td>{{product.productDetails.name}}</td>
+                <td>{{product.productDetails.storagePeriod}}</td>
+                <td>{{product.creationDate}}</td>
+                <td v-if="product.bestBeforeDate>expiresDate">{{product.bestBeforeDate}}</td>
+                <td v-else class="expires">{{product.bestBeforeDate}}</td>
+                <td><input type="image" src="edit.png" @click = "edit"></td>
+                <td><input type="image" src="del.png" @click ="del"/></td>
+            </tr>`,
         methods: {
             del: function() {
                 instance.delete('/' + this.product.id).then(res => {
@@ -117,7 +126,6 @@
             let creationD = formatDate(new Date());
             let storagePeriod = 5;//подтягивать из БД
             let endDate = addDays(creationD, storagePeriod);
-
             return {
                 id: '',
                 name: '',
@@ -139,6 +147,9 @@
         },
         template:
             `<div>
+                <div>
+                    <a href="/logout">Сменить пользователя</a>
+                </div>
                 <br/>
                 <h3 v-if="id">Изменение продукта:</h3>
                 <h3 v-else>Добавление продукта:</h3>
@@ -162,6 +173,9 @@
                 if (this.name ===''){
                     alert('Заполните название')
                 }
+                if (this.storagePeriod ===''){
+                    alert('Заполните срок хранения')
+                }
                 else {
                     if (this.id) {
                         instance.put('/' + this.productAttr.id, product).then(data => {
@@ -171,9 +185,7 @@
                         })
                     }
                     else {
-                        instance.post('', product).then(data => {
-                            this.products.push(product)
-                        });
+                        instance.post('', product).then(res => this.products.push(res.data));
                     }
                     let creationD = formatDate(new Date());
                     let storagePeriod = 5;//подтягивать из БД
@@ -196,15 +208,14 @@
         },
         template:
             `<div>
-            <product-table :products = "products"/>
-        </div>`,
+                <product-table :products = "products"/>
+            </div>`,
         created() {
             instance
                 .get('')
                 .then((response) => {response.data.forEach(products=> this.products.push(products))})
                 .catch(e => {console.log(e)})
         }
-
     });
 </script>
 
