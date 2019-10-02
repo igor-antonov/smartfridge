@@ -28,8 +28,9 @@ public class AuthorizationController {
     }
 
     @PostMapping("/registration")
-    public String registration(@RequestParam String j_login, @RequestParam String j_password){
-        userRepository.save(new User(j_login, passwordEncoder.encode(j_password)));
+    public String registration(@RequestParam String j_login,@RequestParam String fullName,
+                               @RequestParam String email, @RequestParam String j_password){
+        userRepository.save(new User(j_login, fullName, email, passwordEncoder.encode(j_password)));
         return "loginPage";
     }
 }

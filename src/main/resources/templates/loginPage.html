@@ -10,13 +10,7 @@
 
 <div th:if="${#request.getParameter('error') == 'true'}"
      style="color:red;margin:10px 0px;">
-    Login Failed!!!<br />
-    Reason :
-    <span th:if="${#session!= null and #session.getAttribute('SPRING_SECURITY_LAST_EXCEPTION') != null}"
-          th:utext="${#session.getAttribute('SPRING_SECURITY_LAST_EXCEPTION').message}">
-                Static summary
-         </span>
-
+    Пользователь не найден. Проверьте указанные данные.
 </div>
 
 <h3>Введите логин и пароль:</h3>
@@ -41,11 +35,19 @@
     <table>
         <tr>
             <td>Логин:</td>
-            <td><input type='text' name='j_login' value=''></td>
+            <td><input type='text' name='j_login' required="required"></td>
+        </tr>
+        <tr>
+            <td>Имя:</td>
+            <td><input type='text' name='fullName' value=''/></td>
+        </tr>
+        <tr>
+            <td>Электронная почта:</td>
+            <td><input type='email' name='email' required="required"/></td>
         </tr>
         <tr>
             <td>Пароль:</td>
-            <td><input type='password' name='j_password' /></td>
+            <td><input type='password' name='j_password' required="required"/></td>
         </tr>
         <tr>
             <td><input id="registration-button" name="submit" type="submit" value="Ок" /></td>

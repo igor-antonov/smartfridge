@@ -5,8 +5,6 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -16,23 +14,23 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long id;
-    @Column(nullable = false)
-    String login;
+    private long id;
+    @Column(nullable = false, unique = true)
+    private String login;
     @Column(name = "full_name")
-    String fullName;
+    private String fullName;
     @Column(name = "pass", nullable = false)
-    String password;
+    private String password;
     @Column(name = "creation_date")
-    LocalDate creationDate;
+    private LocalDate creationDate;
+    @Column(unique = true, nullable = false)
+    private String email;
 
-    //@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    //private List<Product> product;
-
-    public User(String login, String fullName, String password){
+    public User(String login, String fullName, String email, String password){
         this.login = login;
         this.fullName = fullName;
         this.password = password;
+        this.email = email;
         this.creationDate = LocalDate.now();
     }
 

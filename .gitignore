@@ -17,6 +17,10 @@ HELP.md
 *.iml
 *.ipr
 
+### Logs ###
+*.log
+*.gz
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

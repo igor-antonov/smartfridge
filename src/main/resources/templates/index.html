@@ -21,6 +21,10 @@
         {
             margin-bottom: 5px;
         }
+        .expires
+        {
+            background-color: salmon;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.15.2/axios.js"></script>
@@ -34,6 +38,8 @@
         baseURL: '/product',
         timeout: 1000
     });
+    const currentDate = formatDate(new Date());
+
     function getIndex(list, id) {
         for (let i = 0; i < list.length; i++ ) {
             if (list[i].id === id) {
@@ -42,6 +48,19 @@
         }
         return -1;
     }
+    function formatDate(date){
+        const month = ('0' + (date.getMonth() + 1)).slice(-2);
+        const day = ('0' + date.getDate()).slice(-2);
+        const year = date.getFullYear();
+        return year + "-" + month + "-" + day;
+    }
+
+    function addDays(date, days){
+        var result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return formatDate(result);
+    }
+
     Vue.component('product-table', {
         props: ['products'],
         data: function () {
@@ -58,8 +77,8 @@
                         <th>Срок годности</th>
                         <th>Дата добавления</th>
                         <th>Окончание срока годности</th>
-                        <th>Действие1</th>
-                        <th>Действие2</th>
+                        <th>Изменить</th>
+                        <th>Удалить</th>
                     </tr>
                 </thead>
                 <tbody><product-rows v-for="product in products" :product = "product" :products = "products"
@@ -75,15 +94,19 @@
     });
     Vue.component('product-rows', {
         props: ['product', 'editMethod', 'products'],
+        data: function () {
+            return {expiresDate: addDays(new Date(), 1)};
+        },
         template:
-            `<tr>
-            <td v-if="product.productDetails">{{product.productDetails.name}}</td>
-            <td v-if="product.productDetails">{{product.productDetails.storagePeriod}}</td>
-            <td v-if="product.productDetails">{{product.productDetails.creationDate}}</td>
-            <td v-if="product.productDetails">{{product.productDetails.bestBeforeDate}}</td>
-            <td><input type="image" src="edit.png" @click = "edit"></td>
-            <td><input type="image" src="del.png" @click ="del"/></td>
-        </tr>`,
+            `<tr v-if="product.productDetails">
+                <td>{{product.productDetails.name}}</td>
+                <td>{{product.productDetails.storagePeriod}}</td>
+                <td>{{product.creationDate}}</td>
+                <td v-if="product.bestBeforeDate>expiresDate">{{product.bestBeforeDate}}</td>
+                <td v-else class="expires">{{product.bestBeforeDate}}</td>
+                <td><input type="image" src="edit.png" @click = "edit"></td>
+                <td><input type="image" src="del.png" @click ="del"/></td>
+            </tr>`,
         methods: {
             del: function() {
                 instance.delete('/' + this.product.id).then(res => {
@@ -100,32 +123,40 @@
     Vue.component('product-form', {
         props: ['productAttr', 'products'],
         data: function () {
+            let creationD = formatDate(new Date());
+            let storagePeriod = 5;//подтягивать из БД
+            let endDate = addDays(creationD, storagePeriod);
             return {
                 id: '',
                 name: '',
-                storagePeriod: '',
-                creationDate: '',
-                bestBeforeDate: '',
-            }
+                storagePeriod,
+                creationDate: creationD,
+                bestBeforeDate: endDate
+            };
+
+
         },
         watch: {
             productAttr: function(newVal, oldVal){
                 this.id = newVal.id;
                 this.name = newVal.productDetails.name;
                 this.storagePeriod = newVal.productDetails.storagePeriod;
-                this.creationDate = newVal.productDetails.creationDate;
-                this.bestBeforeDate = newVal.productDetails.bestBeforeDate;
+                this.creationDate = newVal.creationDate;
+                this.bestBeforeDate = newVal.bestBeforeDate;
             }
         },
         template:
             `<div>
+                <div>
+                    <a href="/logout">Сменить пользователя</a>
+                </div>
                 <br/>
                 <h3 v-if="id">Изменение продукта:</h3>
                 <h3 v-else>Добавление продукта:</h3>
                 <div><input type="text" placeholder="Название" v-model="name"/></div>
                 <div><input type="number" placeholder="Срок годности" v-model="storagePeriod"/></div>
-                <div><input type="text" placeholder="Дата добавления" v-model="creationDate"/></div>
-                <div><input type="text" placeholder="Окончание срока годности" v-model="bestBeforeDate"/></div>
+                <div><input type="date" placeholder="Дата добавления" v-model="creationDate"/></div>
+                <div><input type="date" placeholder="Окончание срока годности" v-model="bestBeforeDate"/></div>
                 <div><input type="button" value="Сохранить" @click="save"/></div>
             </div>`,
         methods: {
@@ -133,14 +164,17 @@
                 const productDetails = {
                     name: this.name,
                     storagePeriod: this.storagePeriod,
+                };
+                const product = {
+                    productDetails: productDetails,
                     creationDate: this.creationDate,
                     bestBeforeDate: this.bestBeforeDate
                 };
-                const product = {
-                    productDetails: productDetails
-                };
                 if (this.name ===''){
                     alert('Заполните название')
+                }
+                if (this.storagePeriod ===''){
+                    alert('Заполните срок хранения')
                 }
                 else {
                     if (this.id) {
@@ -151,15 +185,17 @@
                         })
                     }
                     else {
-                        instance.post('', product).then(data => {
-                            this.products.push(product)
-                        });
+                        instance.post('', product).then(res => this.products.push(res.data));
                     }
+                    let creationD = formatDate(new Date());
+                    let storagePeriod = 5;//подтягивать из БД
+                    let endDate = addDays(creationD, storagePeriod);
+
                     this.id = '';
                     this.name = '';
-                    this.storagePeriod = '';
-                    this.creationDate = '';
-                    this.bestBeforeDate = '';
+                    this.storagePeriod = storagePeriod;
+                    this.creationDate = creationD;
+                    this.bestBeforeDate = endDate;
                 }
             }
         }
@@ -172,8 +208,8 @@
         },
         template:
             `<div>
-            <product-table :products = "products"/>
-        </div>`,
+                <product-table :products = "products"/>
+            </div>`,
         created() {
             instance
                 .get('')
